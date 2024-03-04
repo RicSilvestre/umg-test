@@ -74,6 +74,18 @@
         document.documentElement.classList.add('shopify-design-mode');
       }
     </script>
+
+    {% if template.name == 'product' %}
+      <script>
+        const variantsDictionary = {};
+        {% for variant in product.variants %}
+          variantsDictionary["{{ variant.title }}"] = {};
+          variantsDictionary["{{ variant.title }}"].id = {{ variant.id }};
+          variantsDictionary["{{ variant.title }}"].featured_media_id = {{ variant.featured_media.id | default: product.featured_media.id }}
+        {% endfor %}
+      </script>
+      <script src="{{ 'variant-selectors.js' |  asset_url }}" defer="defer"></script>
+    {% endif %}
   </head>
   <body>
     <a class="sr-only focus:not-sr-only" href="#main">

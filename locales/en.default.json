@@ -21,6 +21,11 @@
     "404": {
       "title": "Page not found",
       "subtext": "404"
+    },
+    "product": {
+      "price_varies": "From {{ min_price }} to {{ max_price }}",
+      "sold_out": "Sold Out",
+      "add_to_cart": "Add To Cart"
     }
   },
   "accessibility": {

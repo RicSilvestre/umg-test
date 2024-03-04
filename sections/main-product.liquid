@@ -1,0 +1,328 @@
+{% assign selected_variant = product.selected_or_first_available_variant %}
+{% assign featured_media = selected_variant.featured_media | default: product.featured_media %}
+{% assign icons_created = false %}
+
+{{ cart.item_count }}
+{% capture icons %}
+  <div class="icons">
+    {% assign icons_quantity = 0 %}
+    {% for block in section.blocks %}
+      {% if block.type == 'icon' %}
+        {% assign icons_quantity = icons_quantity |  plus: 1 %}
+        <div class="icon">
+          {% if block.settings.image != blank %}
+            {{ block.settings.image |  image_url: width: 350 |  image_tag  }}
+          {% else %}
+            {{ 'image' | placeholder_svg_tag }}
+          {% endif %}
+          <span>{{ block.settings.title }}</span>
+        </div>
+      {% endif %}
+    {% endfor %}
+  </div>
+{% endcapture %}
+
+<div class="product-media_container">
+  <div class="product-media_highlight-gallery">
+    {% for media in product.media %}
+      <div data-highlight-id="{{ media.id }}" class="product-media_highlight{% if media.id == featured_media.id %} active{% endif %}">
+        {% render 'media-block', featured_media: media %}
+      </div>
+    {% endfor %}
+  </div>
+  <div class="product-media_gallery">
+    {% for media in product.media %}
+      <div data-media-id="{{ media.id }}" class="product-media_gallery-item{% if media.id == featured_media.id %} active{% endif %}">
+        {% render 'media-block', featured_media: media, width: 300 %}
+      </div>
+    {% endfor %}
+  </div>
+</div>
+<div class="product-info">
+  {% for block in section.blocks %}
+    {% case block.type %}
+      {% when "title" %}
+        <h1>{{ product.title }}</h1>
+
+      {% when "price" %}
+        {% comment %} {% if product.price_varies %}
+          {% assign min_price = product.price_min | money %}
+          {% assign max_price = product.price_max | money %}
+          <span class="price">{{ 'templates.product.price_varies' | t: min_price: min_price, max_price: max_price }}</span>
+        {% else %}
+          <span class="price">{{ product.price | money }}</span>
+        {% endif %} {% endcomment %}
+        <div class="price-container">
+          <span class="price">{{ selected_variant.price | money }}</span>
+          {% if selected_variant.compare_at_price >  selected_variant.price %}
+            <span class="compare-price">{{ selected_variant.compare_at_price | money }}</span>
+          {% endif %}
+        </div>
+
+      {% when "variants" %}
+        <div class="variant-selectors-wrapper">
+          <input form="product-atc-form" data-variant-media="{{ product.selected_or_first_available_variant.featured_media.id | default: product.featured_media.id }}" type="hidden" id="selected-variant" name="selected-variant" value="{{ product.selected_or_first_available_variant.id }}">
+          {% unless product.has_only_default_variant %}
+            <variant-selectors>
+              {% for option in product.options_with_values %}
+                <fieldset class="variant-selector" data-option-position="{{ option.position }}" id="selector-{{ option.name | downcase }}">
+                  <legend>{{ option.name }}</legend>
+                  {% for value in option.values %}
+                    <label for="{{ option.name | downcase }}-{{ value | downcase }}">{{ value }}
+                      <input type="radio" {% if option.selected_value == value %}checked{% endif %} data-option="{{ forloop.index0  }}" value="{{ value }}" id="{{ option.name | downcase }}-{{ value | downcase }}" name="selector-{{ option.name |  downcase }}" class="variant-input{% if option.selected_value == value %} active{% endif %}"/>
+                    </label>
+                  {% endfor %}
+                </fieldset>
+              {% endfor %}
+            </variant-selectors>
+          {% endunless %}
+        </div>
+
+      {% when "description" %}
+        <div class="rte">
+          {{ product.description }}
+        </div>
+
+      {% when "buy_buttons" %}
+        <div class="product-form">
+          {% form 'product', product, id: "product-atc-form" %}
+            <button
+              type="submit"
+              name="add"
+              {% if selected_variant.available == false %}
+                disabled
+              {% endif %}
+            >
+              <span>
+                {%- if selected_variant.available == false -%}
+                  {{ 'templates.product.sold_out' | t }}
+                {%- else -%}
+                  {{ 'templates.product.add_to_cart' | t }}
+                {%- endif -%}
+              </span>
+            </button>
+          {% endform %}
+          </div>
+
+
+      {% when "accordion" %}
+        {% if block.settings.content != blank %}
+          <div class="accordion">
+            <label for="block-input-{{ forloop.index }}">{{ block.settings.label }}</label>
+            <input type="checkbox" class="accordion-input" id="block-input-{{ forloop.index }}" name="block-input-{{ forloop.index }}">
+            <div class="accordion-content">
+              <div class="rte">
+                {{ block.settings.content }}
+              </div>
+            </div>
+          </div>
+        {% endif %}
+
+      {% when "rte" %}
+        {% if block.settings.content != blank %}
+          <div class="rte">
+            {{ block.settings.content }}
+          </div>
+        {% endif %}
+
+      {% when "icon" %}
+        {% unless icons_created %}
+          {{ icons }}
+          {%  assign icons_created = true %}
+        {% endunless %}
+
+      {% when "@app" %}
+        {% render block %}
+
+      {% else %}
+
+    {% endcase %}
+  {% endfor %}
+</div>
+
+{%  stylesheet  %}
+.product-media_highlight {
+  display: none;
+}
+
+.product-media_highlight.active {
+  display: block;
+}
+
+.accordion-content {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows .3s;
+}
+
+.accordion-content .rte {
+  overflow: hidden;
+}
+
+.accordion-input:checked + .accordion-content {
+  grid-template-rows: 1fr;
+}
+
+{% endstylesheet %}
+
+
+{%  javascript  %}
+const selectedVariant = document.getElementById("selected-variant");
+const variantsContainer = document.querySelector("variant-selectors");
+const sectionId = selectedVariant.closest(".shopify-section").id.replace("shopify-section-", "");
+const priceContainer = document.querySelector(".price-container");
+const form = document.querySelector(".product-form form");
+
+const mediaSelectors = document.querySelectorAll(".product-media_gallery-item");
+const highlights = document.querySelectorAll(".product-media_highlight");
+const allMediaItems = document.querySelectorAll(".product-media_gallery-item, .product-media_highlight");
+
+mediaSelectors.forEach(sel => {
+  sel.addEventListener("click", e => {
+    const media = e.currentTarget;
+    const highlightId = media.dataset.mediaId;
+    updateGallery(highlightId);
+  })
+})
+
+form.addEventListener("submit", e => {
+  e.preventDefault();
+  let formData = {
+  'items': [{
+    'id': Number(selectedVariant.value),
+    'quantity': 1
+    }]
+  };
+
+  fetch(window.Shopify.routes.root + 'cart/add.js', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(formData)
+  })
+  .then(response => {
+    return response.json();
+  })
+  .catch((error) => {
+    console.error('Error:', error);
+  });
+
+})
+
+async function updateUI(value) {
+  const url = new URL(location);
+  url.searchParams.set("variant", value);
+  history.pushState({}, "", url);
+
+  const response = await fetch(url + '&sections=' + sectionId);
+  const data = await response.json();
+  const sectionWrapper = document.createElement("div");
+  sectionWrapper.innerHTML = data[sectionId];
+  variantsContainer.innerHTML = sectionWrapper.querySelector("variant-selectors").innerHTML;
+  priceContainer.innerHTML = sectionWrapper.querySelector(".price-container").innerHTML;
+  form.innerHTML = sectionWrapper.querySelector(".product-form").innerHTML;
+  variantsContainer.triggerListeners();
+}
+
+function updateGallery(id) {
+  allMediaItems.forEach(item => item.classList.remove("active"));
+  const activeItems = document.querySelectorAll(`[data-highlight-id="${id}"], [data-media-id="${id}"]`);
+  activeItems.forEach(activeItem => activeItem.classList.add("active"));
+}
+
+selectedVariant.addEventListener("change", e => {
+  updateUI(e.currentTarget.value);
+  updateGallery(e.currentTarget.dataset.variantMedia);
+})
+{% endjavascript %}
+
+{% schema %}
+{
+  "name": "Main Product",
+  "class": "main-product container my-12",
+  "tag": "section",
+  "settings": [
+
+  ],
+  "blocks": [
+    {
+      "type": "title",
+      "name": "Title",
+      "limit": 1
+    },
+    {
+      "type": "price",
+      "name": "Price",
+      "limit": 1
+    },
+    {
+      "type": "description",
+      "name": "Description",
+      "limit": 1
+    },
+    {
+      "type": "icon",
+      "name": "Icon",
+      "limit": 4,
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Icon"
+        },
+        {
+          "type": "text",
+          "id": "title",
+          "label": "Title",
+          "default": "Free shipping"
+        }
+      ]
+    },
+    {
+      "type": "variants",
+      "name": "Variants selector",
+      "limit": 1
+    },
+    {
+      "type": "rte",
+      "name": "Rich Text",
+      "settings": [
+        {
+          "type": "richtext",
+          "id": "content",
+          "label": "Content"
+        }
+      ]
+    },
+    {
+      "type": "accordion",
+      "name": "Accordion",
+      "settings": [
+        {
+          "type": "text",
+          "id": "label",
+          "label": "Label",
+          "default": "Heading"
+        },
+        {
+          "type": "richtext",
+          "id": "content",
+          "label": "Content"
+        }
+      ]
+    },
+    {
+      "type": "buy_buttons",
+      "name": "Buy buttons",
+      "limit": 1
+    }
+  ],
+  "presets": [
+    {
+      "name": "Main Product"
+    }
+  ],
+  "limit": 1
+}
+{% endschema %}

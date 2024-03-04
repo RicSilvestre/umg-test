@@ -1,0 +1,33 @@
+{%  assign width = width | default: 2048 %}
+{% case featured_media.media_type %}
+    {% when 'image' %}
+      <div class="product-media"
+        data-media-id="{{ featured_media.id }}"
+      >
+        {{ featured_media | image_url: width: width | image_tag }}
+      </div>
+    {% when 'external_video' %}
+      <div class="product-media"
+        data-media-id="{{ featured_media.id }}"
+      >
+        {{ featured_media | external_video_tag }}
+      </div>
+    {% when 'video' %}
+      <div class="product-media" data-media-id="{{ featured_media.id }}">
+        {{ featured_media | video_tag: controls: true }}
+      </div>
+    {% when 'model' %}
+      <div class="product-media"
+        style="padding-top: 100%"
+        data-media-id="{{ featured_media.id }}"
+      >
+        {{ featured_media | model_viewer_tag }}
+      </div>
+    {% else %}
+      <div class="product-media"
+        style="padding-top: 100%;"
+        data-media-id="{{ featured_media.id }}"
+      >
+        {{ featured_media | media_tag }}
+      </div>
+  {% endcase %}
