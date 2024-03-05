@@ -2,7 +2,6 @@
 {% assign featured_media = selected_variant.featured_media | default: product.featured_media %}
 {% assign icons_created = false %}
 
-{{ cart.item_count }}
 {% capture icons %}
   <div class="icons">
     {% assign icons_quantity = 0 %}
@@ -15,7 +14,7 @@
           {% else %}
             {{ 'image' | placeholder_svg_tag }}
           {% endif %}
-          <span>{{ block.settings.title }}</span>
+          <span class="text-xs">{{ block.settings.title }}</span>
         </div>
       {% endif %}
     {% endfor %}
@@ -42,7 +41,7 @@
   {% for block in section.blocks %}
     {% case block.type %}
       {% when "title" %}
-        <h1>{{ product.title }}</h1>
+        <h1 class="text-4xl">{{ product.title }}</h1>
 
       {% when "price" %}
         {% comment %} {% if product.price_varies %}
@@ -52,7 +51,7 @@
         {% else %}
           <span class="price">{{ product.price | money }}</span>
         {% endif %} {% endcomment %}
-        <div class="price-container">
+        <div class="price-container text-2xl">
           <span class="price">{{ selected_variant.price | money }}</span>
           {% if selected_variant.compare_at_price >  selected_variant.price %}
             <span class="compare-price">{{ selected_variant.compare_at_price | money }}</span>
@@ -61,9 +60,9 @@
 
       {% when "quantity" %}
         <div class="quantity-wrapper">
-          <button>-</button>
+          <button class="qty-decreaser">-</button>
           <input type="number" form="product-atc-form" name="quantity" id="quantity" value="1" min="1">
-          <button>+</button>
+          <button class="qty-increaser">+</button>
         </div>
 
       {% when "variants" %}
@@ -73,12 +72,15 @@
             <variant-selectors>
               {% for option in product.options_with_values %}
                 <fieldset class="variant-selector" data-option-position="{{ option.position }}" id="selector-{{ option.name | downcase }}">
-                  <legend>{{ option.name }}</legend>
-                  {% for value in option.values %}
-                    <label for="{{ option.name | downcase }}-{{ value | downcase }}">{{ value }}
-                      <input type="radio" {% if option.selected_value == value %}checked{% endif %} data-option="{{ forloop.index0  }}" value="{{ value }}" id="{{ option.name | downcase }}-{{ value | downcase }}" name="selector-{{ option.name |  downcase }}" class="variant-input{% if option.selected_value == value %} active{% endif %}"/>
-                    </label>
-                  {% endfor %}
+                  <legend class="text-sm">{{ option.name }}</legend>
+                  <div class="variant-selector_options">
+                    {% for value in option.values %}
+                      <input type="radio" {% if option.selected_value == value %}checked{% endif %} data-option="{{ forloop.index0  }}" value="{{ value }}" id="{{ option.name | downcase }}-{{ value | downcase }}" name="selector-{{ option.name |  downcase }}" class="hidden variant-input{% if option.selected_value == value %} active{% endif %}"/>
+                      <label class="text-sm" for="{{ option.name | downcase }}-{{ value | downcase }}">
+                        {{ value }}
+                      </label>
+                    {% endfor %}
+                  </div>
                 </fieldset>
               {% endfor %}
             </variant-selectors>
@@ -86,7 +88,7 @@
         </div>
 
       {% when "description" %}
-        <div class="rte">
+        <div class="rte text-base">
           {{ product.description }}
         </div>
 
@@ -96,6 +98,7 @@
             <button
               type="submit"
               name="add"
+              class="atc-button"
               {% if selected_variant.available == false %}
                 disabled
               {% endif %}
@@ -116,10 +119,10 @@
       {% when "accordion" %}
         {% if block.settings.content != blank %}
           <div class="accordion">
-            <label for="block-input-{{ forloop.index }}">{{ block.settings.label }}</label>
-            <input type="checkbox" class="accordion-input" id="block-input-{{ forloop.index }}" name="block-input-{{ forloop.index }}">
+            <label for="block-input-{{ forloop.index }}" class="block text-base font-semibold cursor-pointer">{{ block.settings.label }}</label>
+            <input type="checkbox" class="accordion-input hidden" id="block-input-{{ forloop.index }}" name="block-input-{{ forloop.index }}">
             <div class="accordion-content">
-              <div class="rte">
+              <div class="rte text-sm">
                 {{ block.settings.content }}
               </div>
             </div>
@@ -128,7 +131,7 @@
 
       {% when "rte" %}
         {% if block.settings.content != blank %}
-          <div class="rte">
+          <div class="rte text-base">
             {{ block.settings.content }}
           </div>
         {% endif %}
@@ -171,6 +174,188 @@
   grid-template-rows: 1fr;
 }
 
+.main-product {
+  display: flex;
+  gap: clamp(2.5rem, 3.5vw, 5rem);
+}
+
+.product-media_container {
+  width: 66%;
+}
+
+.product-info {
+  width: 33%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.product-media_gallery {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 1rem;
+  padding-top: 1rem;
+  overflow-x: auto;
+}
+
+.product-media_gallery-item {
+  cursor: pointer;
+
+}
+
+.product-media_gallery-item.active .product-media {
+  border: 6px solid black;
+
+}
+
+.product-media_gallery .product-media {
+  width: clamp(5.5rem , 12vw, 11.5rem);
+  aspect-ratio: 1;
+}
+
+
+.product-media_gallery .product-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+variant-selectors {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.variant-selector legend {
+  font-weight: 600;
+}
+
+.variant-selector_options {
+  padding-top: .5rem;
+  display: flex;
+  gap: .5rem;
+}
+
+.variant-selector label {
+  padding: .5rem;
+  border: 2px solid #000;
+  cursor: pointer;
+  border-radius: 5px;
+  transition: .3s;
+}
+
+.variant-selector input:checked + label, .variant-selector label:hover {
+  border-color: black;
+  background: black;
+  color: #fff;
+}
+
+.atc-button {
+  width: 100%;
+  padding: .5rem 1rem;
+  background: black;
+  color: white;
+  transition: .3s;
+  opacity: .8;
+}
+
+.atc-button[disabled] {
+  background: #aaa;
+}
+
+.atc-button .spinner-umg {
+  filter: invert(1);
+}
+
+.atc-button:hover {
+  opacity: 1;
+}
+
+.spinner-umg {
+  margin: auto;
+}
+
+.icons {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  text-align: center;
+  gap: .5rem;
+}
+
+.icons .icon {
+  max-width: 33%;
+  display: grid;
+  height: 100%;
+  grid-template-rows: 3rem auto;
+  gap: .25rem;
+  flex: 0;
+}
+
+.icons .icon img, .icons .icon svg {
+  max-height: 100%;
+  max-width: 100%;
+}
+
+.accordion {
+  padding: 1rem;
+  border: 1px solid #bbb;
+  border-radius: 5px;
+  position: relative;
+}
+
+.accordion .accordion-content::after {
+  content: "+";
+  font-size: 1.8rem;
+  line-height: 1rem;
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+}
+
+.accordion input:checked + .accordion-content {
+  padding-top: .5rem;
+}
+
+.accordion input:checked + .accordion-content::after {
+  content: "-";
+}
+
+.quantity-wrapper {
+  display: inline-flex;
+  border: 1px solid black;
+  border-radius: 5px;
+  width: fit-content;
+  height: 2rem;
+}
+
+.quantity-wrapper input {
+  width: 3rem;
+  text-align: center;
+  padding-left: .5rem;
+}
+
+.quantity-wrapper button {
+  line-height: 1;
+  min-width: 2rem;
+  font-size: 1.2rem;
+  text-align: center;
+}
+
+.quantity-wrapper button:first-child {
+  border-radius: 5px 0 0 5px;
+}
+
+@media (max-width: 767px) {
+  .main-product {
+    flex-direction: column;
+  }
+
+  .product-media_container, .product-info {
+    width: 100%;
+  }
+}
+
 {% endstylesheet %}
 
 
@@ -181,12 +366,20 @@ const sectionId = selectedVariant.closest(".shopify-section").id.replace("shopif
 const priceContainer = document.querySelector(".price-container");
 const form = document.querySelector(".product-form form");
 const quantity = document.getElementById("quantity");
+const atcButton = document.querySelector(".atc-button");
 const buttonContent = document.querySelector(".product-form button span");
 const spinner = document.querySelector(".product-form .spinner-umg");
+const qtyButtons = document.querySelectorAll(".quantity-wrapper button");
 
 const mediaSelectors = document.querySelectorAll(".product-media_gallery-item");
 const highlights = document.querySelectorAll(".product-media_highlight");
 const allMediaItems = document.querySelectorAll(".product-media_gallery-item, .product-media_highlight");
+
+qtyButtons.forEach(button => {
+  button.addEventListener("click", e => {
+    updateQuantity(e.currentTarget);
+  })
+})
 
 mediaSelectors.forEach(sel => {
   sel.addEventListener("click", e => {
@@ -200,6 +393,7 @@ form.addEventListener("submit", e => {
   e.preventDefault();
   if (isCartUpdating) return;
   isCartUpdating = true;
+  atcButton.setAttribute("disabled", "disabled");
   buttonContent.style.display = "none";
   spinner.style.display = "block";
   let formData = {
@@ -229,6 +423,7 @@ form.addEventListener("submit", e => {
     triggerCartListeners();
     buttonContent.style.display = "block";
     spinner.style.display = "none";
+    atcButton.removeAttribute("disabled");
     isCartUpdating = false;
   })
   .catch((error) => {
