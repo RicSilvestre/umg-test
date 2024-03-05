@@ -363,14 +363,16 @@ variant-selectors {
 const selectedVariant = document.getElementById("selected-variant");
 const variantsContainer = document.querySelector("variant-selectors");
 const sectionId = selectedVariant.closest(".shopify-section").id.replace("shopify-section-", "");
+
 const priceContainer = document.querySelector(".price-container");
 const form = document.querySelector(".product-form form");
 const quantity = document.getElementById("quantity");
+
 const atcButton = document.querySelector(".atc-button");
 const buttonContent = document.querySelector(".product-form button span");
 const spinner = document.querySelector(".product-form .spinner-umg");
-const qtyButtons = document.querySelectorAll(".quantity-wrapper-atc button");
 
+const qtyButtons = document.querySelectorAll(".quantity-wrapper-atc button");
 
 const mediaSelectors = document.querySelectorAll(".product-media_gallery-item");
 const highlights = document.querySelectorAll(".product-media_highlight");
@@ -388,6 +390,11 @@ mediaSelectors.forEach(sel => {
     const highlightId = media.dataset.mediaId;
     updateGallery(highlightId);
   })
+})
+
+selectedVariant.addEventListener("change", e => {
+  updateUI(e.currentTarget.value);
+  updateGallery(e.currentTarget.dataset.variantMedia);
 })
 
 form.addEventListener("submit", e => {
@@ -460,10 +467,6 @@ function updateGallery(id) {
   activeItems.forEach(activeItem => activeItem.classList.add("active"));
 }
 
-selectedVariant.addEventListener("change", e => {
-  updateUI(e.currentTarget.value);
-  updateGallery(e.currentTarget.dataset.variantMedia);
-})
 {% endjavascript %}
 
 {% schema %}
