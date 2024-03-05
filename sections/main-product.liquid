@@ -107,6 +107,7 @@
                   {{ 'templates.product.add_to_cart' | t }}
                 {%- endif -%}
               </span>
+              {% render 'spinner' %}
             </button>
           {% endform %}
           </div>
@@ -180,6 +181,8 @@ const sectionId = selectedVariant.closest(".shopify-section").id.replace("shopif
 const priceContainer = document.querySelector(".price-container");
 const form = document.querySelector(".product-form form");
 const quantity = document.getElementById("quantity");
+const buttonContent = document.querySelector(".product-form button span");
+const spinner = document.querySelector(".product-form .spinner-umg");
 
 const mediaSelectors = document.querySelectorAll(".product-media_gallery-item");
 const highlights = document.querySelectorAll(".product-media_highlight");
@@ -195,6 +198,10 @@ mediaSelectors.forEach(sel => {
 
 form.addEventListener("submit", e => {
   e.preventDefault();
+  if (isCartUpdating) return;
+  isCartUpdating = true;
+  buttonContent.style.display = "none";
+  spinner.style.display = "block";
   let formData = {
   'items': [{
     'id': Number(selectedVariant.value),
@@ -219,7 +226,10 @@ form.addEventListener("submit", e => {
     const drawerCartForm = document.getElementById("drawer-cart-form");
     const newForm = newDrawer.querySelector("#drawer-cart-form");
     drawerCartForm.innerHTML = newForm.innerHTML;
-
+    triggerCartListeners();
+    buttonContent.style.display = "block";
+    spinner.style.display = "none";
+    isCartUpdating = false;
   })
   .catch((error) => {
     console.error('Error:', error);

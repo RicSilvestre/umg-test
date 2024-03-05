@@ -46,7 +46,10 @@
               </dl>
               <p class="product-option">{{ item.selling_plan_allocation.selling_plan.name }}</p>
             {%- endif -%}
-            <span class="item-final-price">{{ item.final_line_price | money }}</span>
+            <div class="item-price-container">
+              <span class="item-final-price">{{ item.final_line_price | money }}</span>
+              {% render 'spinner' %}
+            </div>
             <a class="item-remover" data-item-key="{{ item.key }}" href="{{ item.url_to_remove }}">Remove</a>
           </div>
         </div>
@@ -65,92 +68,6 @@
 
 </script>
 
-{%  javascript  %}
-const qtyHandlers = document.querySelectorAll(".drawer-qty-button");
-const drawerForm = document.getElementById("drawer-cart-form");
-const subtotalPrice = document.querySelector(".subtotal-price");
-const removers = document.querySelectorAll(".item-remover");
-
-removers.forEach(remover => {
-  remover.addEventListener("click", e => {
-    e.preventDefault();
-    const currentItem = e.currentTarget;
-    const key = currentItem.dataset.itemKey;
-    console.log(key);
-    const changer = {
-      'id': key,
-      'quantity': 0,
-      'sections': ['drawer-cart']
-    }
-    fetch(window.Shopify.routes.root + 'cart/change.js', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(changer)
-    })
-    .then(response => response.json())
-    .then(data => {
-      const drawerWrapper = document.createElement("div");
-      drawerWrapper.innerHTML = data.sections['drawer-cart'];
-      const newTotal = drawerWrapper.querySelector('.subtotal-price');
-      subtotalPrice.innerHTML = newTotal.innerHTML;
-      currentItem.closest('.drawer-cart_item').remove();
-    });
-  })
-});
-
-drawerForm.addEventListener("submit", e => {
-  e.preventDefault();
-})
-
-qtyHandlers.forEach(button => {
-  button.addEventListener("click", e => {
-    updateQuantity(e.currentTarget);
-    updateDrawerItems();
-  })
-})
-
-function updateQuantity(handler) {
-  const input = handler.className.includes('increaser') ? handler.previousElementSibling : handler.nextElementSibling;
-  const qtyToUpdate = handler.className.includes('increaser') ? 1 : -1;
-  const newValue = Number(input.value) + qtyToUpdate;
-  if (newValue > 0) input.value = newValue;
-
-}
-
-function updateDrawerItems() {
-  const formData = new FormData(drawerForm);
-  const updates = formData.getAll("updates[]");
-
-  fetch(window.Shopify.routes.root + 'cart/update.js', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ updates, sections: ['drawer-cart'] })
-  })
-  .then(response => {
-    return response.json();
-  })
-  .then(result => {
-    const drawerWrapper = document.createElement("div");
-    drawerWrapper.innerHTML = result.sections['drawer-cart'];
-    const itemsPrices = document.querySelectorAll(".item-final-price");
-    const newPrices = drawerWrapper.querySelectorAll('.item-final-price');
-    const newTotal = drawerWrapper.querySelector('.subtotal-price');
-    itemsPrices.forEach((item, index) => {
-      item.innerHTML = newPrices[index].innerHTML;
-    })
-    subtotalPrice.innerHTML = newTotal.innerHTML;
-  })
-  .catch((error) => {
-    console.error('Error:', error);
-  });
-
-}
-
-{% endjavascript %}
 
 {% schema %}
 {
