@@ -59,6 +59,13 @@
           {% endif %}
         </div>
 
+      {% when "quantity" %}
+        <div class="quantity-wrapper">
+          <button>-</button>
+          <input type="number" form="product-atc-form" name="quantity" id="quantity" value="1" min="1">
+          <button>+</button>
+        </div>
+
       {% when "variants" %}
         <div class="variant-selectors-wrapper">
           <input form="product-atc-form" data-variant-media="{{ product.selected_or_first_available_variant.featured_media.id | default: product.featured_media.id }}" type="hidden" id="selected-variant" name="selected-variant" value="{{ product.selected_or_first_available_variant.id }}">
@@ -172,6 +179,7 @@ const variantsContainer = document.querySelector("variant-selectors");
 const sectionId = selectedVariant.closest(".shopify-section").id.replace("shopify-section-", "");
 const priceContainer = document.querySelector(".price-container");
 const form = document.querySelector(".product-form form");
+const quantity = document.getElementById("quantity");
 
 const mediaSelectors = document.querySelectorAll(".product-media_gallery-item");
 const highlights = document.querySelectorAll(".product-media_highlight");
@@ -190,8 +198,9 @@ form.addEventListener("submit", e => {
   let formData = {
   'items': [{
     'id': Number(selectedVariant.value),
-    'quantity': 1
-    }]
+    'quantity': Number(quantity.value)
+    }],
+    'sections': ['drawer-cart']
   };
 
   fetch(window.Shopify.routes.root + 'cart/add.js', {
@@ -203,6 +212,14 @@ form.addEventListener("submit", e => {
   })
   .then(response => {
     return response.json();
+  })
+  .then(result => {
+    const newDrawer = document.createElement("div");
+    newDrawer.innerHTML = result.sections['drawer-cart'];
+    const drawerCartForm = document.getElementById("drawer-cart-form");
+    const newForm = newDrawer.querySelector("#drawer-cart-form");
+    drawerCartForm.innerHTML = newForm.innerHTML;
+
   })
   .catch((error) => {
     console.error('Error:', error);
@@ -259,6 +276,11 @@ selectedVariant.addEventListener("change", e => {
     {
       "type": "description",
       "name": "Description",
+      "limit": 1
+    },
+    {
+      "type": "quantity",
+      "name": "Quantity",
       "limit": 1
     },
     {
