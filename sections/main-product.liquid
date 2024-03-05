@@ -59,7 +59,7 @@
         </div>
 
       {% when "quantity" %}
-        <div class="quantity-wrapper">
+        <div class="quantity-wrapper-atc">
           <button class="qty-decreaser">-</button>
           <input type="number" form="product-atc-form" name="quantity" id="quantity" value="1" min="1">
           <button class="qty-increaser">+</button>
@@ -180,7 +180,7 @@
 }
 
 .product-media_container {
-  width: 66%;
+  width: 50%;
 }
 
 .product-info {
@@ -209,7 +209,7 @@
 }
 
 .product-media_gallery .product-media {
-  width: clamp(5.5rem , 12vw, 11.5rem);
+  width: clamp(5.5rem , 12vw, 7.5rem);
   aspect-ratio: 1;
 }
 
@@ -321,7 +321,7 @@ variant-selectors {
   content: "-";
 }
 
-.quantity-wrapper {
+.quantity-wrapper-atc, .quantity-wrapper {
   display: inline-flex;
   border: 1px solid black;
   border-radius: 5px;
@@ -329,20 +329,20 @@ variant-selectors {
   height: 2rem;
 }
 
-.quantity-wrapper input {
+.quantity-wrapper-atc input, .quantity-wrapper input {
   width: 3rem;
   text-align: center;
   padding-left: .5rem;
 }
 
-.quantity-wrapper button {
+.quantity-wrapper-atc button, .quantity-wrapper button {
   line-height: 1;
   min-width: 2rem;
   font-size: 1.2rem;
   text-align: center;
 }
 
-.quantity-wrapper button:first-child {
+.quantity-wrapper-atc button:first-child, .quantity-wrapper button:first-child {
   border-radius: 5px 0 0 5px;
 }
 
@@ -369,7 +369,8 @@ const quantity = document.getElementById("quantity");
 const atcButton = document.querySelector(".atc-button");
 const buttonContent = document.querySelector(".product-form button span");
 const spinner = document.querySelector(".product-form .spinner-umg");
-const qtyButtons = document.querySelectorAll(".quantity-wrapper button");
+const qtyButtons = document.querySelectorAll(".quantity-wrapper-atc button");
+
 
 const mediaSelectors = document.querySelectorAll(".product-media_gallery-item");
 const highlights = document.querySelectorAll(".product-media_highlight");
@@ -424,6 +425,12 @@ form.addEventListener("submit", e => {
     buttonContent.style.display = "block";
     spinner.style.display = "none";
     atcButton.removeAttribute("disabled");
+    handleDrawerCart();
+
+    const currentItemCount = Number(document.querySelector(".item-count").innerHTML);
+    const newCount = currentItemCount + Number(quantity.value);
+    updateItemCounts(newCount);
+
     isCartUpdating = false;
   })
   .catch((error) => {

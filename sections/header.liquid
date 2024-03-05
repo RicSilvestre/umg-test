@@ -4,6 +4,10 @@
       <a href="{{ routes.root_url }}" aria-label="Home">
         {% render 'logo' %}
       </a>
+      <div class="icon-bag-wrapper xl:hidden">
+        {% render 'icon-bag' %}
+        <span class="item-count text-xs">{{ cart.item_count }}</span>
+      </div>
       <label for="nav-toggle-input" class="block xl:hidden">
         <svg
           class="w-6 h-6"
@@ -30,6 +34,10 @@
       aria-labelledby="nav-toggle-label"
       aria-controls="header-navigation"
     >
+    <div class="icon-bag-wrapper hidden xl:block">
+      {% render 'icon-bag' %}
+      <span class="item-count text-xs">{{ cart.item_count }}</span>
+    </div>
     <nav
       id="header-navigation"
       class="w-full xl:w-auto overflow-hidden hidden xl:block peer-checked:block"
