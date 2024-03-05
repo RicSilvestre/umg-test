@@ -1,7 +1,7 @@
-<div class="drawer-cart_header">
-  <h3>{{ 'general.cart.title' | t }}</h3>
+<div class="drawer-cart_header border-b-2 border-black pb-2 justify-between flex items-center">
+  <h3 class="text-2xl">{{ 'general.cart.title' | t }}</h3>
+  <span class="text-2xl drawer-cart-closer cursor-pointer">X</span>
 </div>
-<a href="/checkout">Tester</a>
 <div class="drawer-cart_body">
   {% if cart.item_count < 1 %}
     <p>{{ 'general.cart.empty' | t }}</p>
@@ -13,12 +13,7 @@
             {{ item.image |  image_url: 'small' | img_tag }}
           </div>
           <div class="drawer-cart_item_info">
-            <h5>{{ item.product.title }}</h5>
-            <div class="quantity-wrapper">
-              <button class="drawer-qty-decreaser drawer-qty-button">-</button>
-              <input type="number" name="updates[]" value="{{ item.quantity }}" id="item-{{ forloop.index }}">
-              <button class="drawer-qty-increaser drawer-qty-button">-</button>
-            </div>
+            <h5 class="text-xl">{{ item.product.title }}</h5>
             {%- if item.product.has_only_default_variant == false
               or item.properties.size != 0
               or item.selling_plan_allocation != null
@@ -27,7 +22,7 @@
                 {%- if item.product.has_only_default_variant == false -%}
                   {%- for option in item.options_with_values -%}
                     <div class="product-option">
-                      <p>{{ option.name }}: {{ option.value  }}</p>
+                      <p class="text-sm"><span class="font-semibold">{{ option.name }}</span>: {{ option.value  }}</p>
                     </div>
                   {%- endfor -%}
                 {%- endif -%}
@@ -44,11 +39,20 @@
                   {% endfor %}
                 {% endunless %}
               </dl>
-              <p class="product-option">{{ item.selling_plan_allocation.selling_plan.name }}</p>
+              {% if item.selling_plan_allocation != null %}
+                <p class="product-option">{{ item.selling_plan_allocation.selling_plan.name }}</p>
+              {% endif %}
             {%- endif -%}
-            <div class="item-price-container">
-              <span class="item-final-price">{{ item.final_line_price | money }}</span>
-              {% render 'spinner' %}
+            <div class="item-qty-w-price">
+              <div class="quantity-wrapper">
+                <button class="drawer-qty-decreaser drawer-qty-button">-</button>
+                <input type="number" name="updates[]" value="{{ item.quantity }}" id="item-{{ forloop.index }}">
+                <button class="drawer-qty-increaser drawer-qty-button">+</button>
+              </div>
+              <div class="item-price-container">
+                <span class="item-final-price">{{ item.final_line_price | money }}</span>
+                {% render 'spinner' %}
+              </div>
             </div>
             <a class="item-remover" data-item-key="{{ item.key }}" href="{{ item.url_to_remove }}">Remove</a>
           </div>
@@ -57,17 +61,147 @@
     </form>
   {% endif %}
 </div>
-<div class="drawer-cart_footer">
-  <textarea name="note" form="cart"></textarea>
-  <h5>Subtotal:</h5>
-  <p class="subtotal-price">{{ cart.total_price | money }}</p>
-  <input type="submit" form="drawer-cart-form" name="checkout" value="Checkout">
+<div class="drawer-cart_footer py-2 border-t-2 border-black">
+  <textarea name="note" form="cart" class="border border-black w-full"></textarea>
+  <div class="flex justify-between items-center">
+    <h5 class="text-lg font-semibold">Subtotal:</h5>
+    <p class="subtotal-price text-lg">{{ cart.total_price | money }}</p>
+  </div>
+  {% comment %} <input type="submit" form="drawer-cart-form" name="checkout" value="Checkout"> {% endcomment %}
+  <a class="checkout-button" href="/checkout">Checkout</a>
 </div>
 
 <script>
 
 </script>
 
+{%  stylesheet  %}
+  .overlay {
+    position: fixed;
+    width: 100dvw;
+    height: 100dvh;
+    background: black;
+    opacity: .7;
+    z-index: 500;
+    top: 0;
+    left: 0;
+    display: none;
+  }
+
+  .overlay.active {
+    display: block;
+  }
+
+  .icon-bag-wrapper {
+    height: 22px;
+    margin-left: auto;
+    position: relative;
+    padding-right: .5rem;
+    cursor: pointer;
+  }
+
+  .icon-bag-wrapper svg {
+    max-height: 100%;
+    max-width: 100%;
+    height: auto;
+    width: auto;
+  }
+
+  .item-count {
+    position: absolute;
+    right: 5px;
+    bottom: -5px;
+    border-radius: 50%;
+    aspect-ratio: 1;
+    display: block;
+    text-align: center;
+    padding: 2px;
+    width: 1rem;
+    height: 1rem;
+    line-height: 1;
+    color: white;
+    background: black;
+  }
+
+  #shopify-section-drawer-cart {
+    position: fixed;
+    right: 0;
+    top: 0;
+    width: 100%;
+    max-width: 375px;
+    background: white;
+    border-left: 2px solid black;
+    padding: 1.5rem;
+    height: 100dvh;
+    overflow: auto;
+    display: grid;
+    transform: translateX(100%);
+    grid-template-rows: auto auto 1fr auto;
+    transition: .3s;
+    z-index: 600;
+  }
+
+  #shopify-section-drawer-cart.active {
+    transform: translateX(0);
+  }
+
+  .drawer-cart_body {
+    overflow: auto;
+    padding: 1rem 0;
+  }
+
+  #drawer-cart-form {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  .drawer-cart_item {
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #aaa;
+  }
+
+  .drawer-cart_item, .drawer-cart_item_info {
+    gap: 1rem;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+
+  .drawer-cart_item_info {
+    position: static;
+    gap: .5rem;
+  }
+
+  .item-remover {
+    position: absolute;
+    right: .5rem;
+    top: 0;
+  }
+
+  .item-qty-w-price {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-right: .5rem;
+  }
+
+  .checkout-button {
+    width: 100%;
+    padding: .5rem 1rem;
+    background: black;
+    color: white;
+    transition: .3s;
+    opacity: .8;
+    display: block;
+    text-align: center;
+    margin-top: .5rem;
+  }
+
+  .checkout-button:hover {
+    opacity: 1;
+  }
+{% endstylesheet %}
 
 {% schema %}
 {
