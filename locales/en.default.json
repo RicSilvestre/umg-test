@@ -15,6 +15,10 @@
       "login_form_error": "Wrong password!",
       "login_form_submit": "Enter",
       "admin_link_html": "Are you the store owner? <a href=\"/admin\" class=\"underline hover:opacity-75\">Log in here</a>"
+    },
+    "cart": {
+      "title": "Your Cart",
+      "empty": "Your cart is empty! Check out or products!"
     }
   },
   "templates": {

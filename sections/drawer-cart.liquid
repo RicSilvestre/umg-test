@@ -1,0 +1,163 @@
+<div class="drawer-cart_header">
+  <h3>{{ 'general.cart.title' | t }}</h3>
+</div>
+<a href="/checkout">Tester</a>
+<div class="drawer-cart_body">
+  {% if cart.item_count < 1 %}
+    <p>{{ 'general.cart.empty' | t }}</p>
+  {% else %}
+    <form action="{{ routes.cart_url }}" id="drawer-cart-form" method="post">
+      {% for item in cart.items %}
+        <div class="drawer-cart_item">
+          <div class="drawer-cart_item_media">
+            {{ item.image |  image_url: 'small' | img_tag }}
+          </div>
+          <div class="drawer-cart_item_info">
+            <h5>{{ item.product.title }}</h5>
+            <div class="quantity-wrapper">
+              <button class="drawer-qty-decreaser drawer-qty-button">-</button>
+              <input type="number" name="updates[]" value="{{ item.quantity }}" id="item-{{ forloop.index }}">
+              <button class="drawer-qty-increaser drawer-qty-button">-</button>
+            </div>
+            {%- if item.product.has_only_default_variant == false
+              or item.properties.size != 0
+              or item.selling_plan_allocation != null
+            -%}
+              <dl>
+                {%- if item.product.has_only_default_variant == false -%}
+                  {%- for option in item.options_with_values -%}
+                    <div class="product-option">
+                      <p>{{ option.name }}: {{ option.value  }}</p>
+                    </div>
+                  {%- endfor -%}
+                {%- endif -%}
+
+                {% unless item.properties == empty %}
+                  {% for property in item.properties %}
+                    {{ property.first }}:
+
+                    {% if property.last contains '/uploads/' %}
+                      <a href="{{ property.last }}">{{ property.last | split: '/' | last }}</a>
+                    {% else %}
+                      {{ property.last }}
+                    {% endif %}
+                  {% endfor %}
+                {% endunless %}
+              </dl>
+              <p class="product-option">{{ item.selling_plan_allocation.selling_plan.name }}</p>
+            {%- endif -%}
+            <span class="item-final-price">{{ item.final_line_price | money }}</span>
+            <a class="item-remover" data-item-key="{{ item.key }}" href="{{ item.url_to_remove }}">Remove</a>
+          </div>
+        </div>
+      {% endfor %}
+    </form>
+  {% endif %}
+</div>
+<div class="drawer-cart_footer">
+  <textarea name="note" form="cart"></textarea>
+  <h5>Subtotal:</h5>
+  <p class="subtotal-price">{{ cart.total_price | money }}</p>
+  <input type="submit" form="drawer-cart-form" name="checkout" value="Checkout">
+</div>
+
+<script>
+
+</script>
+
+{%  javascript  %}
+const qtyHandlers = document.querySelectorAll(".drawer-qty-button");
+const drawerForm = document.getElementById("drawer-cart-form");
+const subtotalPrice = document.querySelector(".subtotal-price");
+const removers = document.querySelectorAll(".item-remover");
+
+removers.forEach(remover => {
+  remover.addEventListener("click", e => {
+    e.preventDefault();
+    const currentItem = e.currentTarget;
+    const key = currentItem.dataset.itemKey;
+    console.log(key);
+    const changer = {
+      'id': key,
+      'quantity': 0,
+      'sections': ['drawer-cart']
+    }
+    fetch(window.Shopify.routes.root + 'cart/change.js', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(changer)
+    })
+    .then(response => response.json())
+    .then(data => {
+      const drawerWrapper = document.createElement("div");
+      drawerWrapper.innerHTML = data.sections['drawer-cart'];
+      const newTotal = drawerWrapper.querySelector('.subtotal-price');
+      subtotalPrice.innerHTML = newTotal.innerHTML;
+      currentItem.closest('.drawer-cart_item').remove();
+    });
+  })
+});
+
+drawerForm.addEventListener("submit", e => {
+  e.preventDefault();
+})
+
+qtyHandlers.forEach(button => {
+  button.addEventListener("click", e => {
+    updateQuantity(e.currentTarget);
+    updateDrawerItems();
+  })
+})
+
+function updateQuantity(handler) {
+  const input = handler.className.includes('increaser') ? handler.previousElementSibling : handler.nextElementSibling;
+  const qtyToUpdate = handler.className.includes('increaser') ? 1 : -1;
+  const newValue = Number(input.value) + qtyToUpdate;
+  if (newValue > 0) input.value = newValue;
+
+}
+
+function updateDrawerItems() {
+  const formData = new FormData(drawerForm);
+  const updates = formData.getAll("updates[]");
+
+  fetch(window.Shopify.routes.root + 'cart/update.js', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ updates, sections: ['drawer-cart'] })
+  })
+  .then(response => {
+    return response.json();
+  })
+  .then(result => {
+    const drawerWrapper = document.createElement("div");
+    drawerWrapper.innerHTML = result.sections['drawer-cart'];
+    const itemsPrices = document.querySelectorAll(".item-final-price");
+    const newPrices = drawerWrapper.querySelectorAll('.item-final-price');
+    const newTotal = drawerWrapper.querySelector('.subtotal-price');
+    itemsPrices.forEach((item, index) => {
+      item.innerHTML = newPrices[index].innerHTML;
+    })
+    subtotalPrice.innerHTML = newTotal.innerHTML;
+  })
+  .catch((error) => {
+    console.error('Error:', error);
+  });
+
+}
+
+{% endjavascript %}
+
+{% schema %}
+{
+  "name": "Drawer Cart",
+  "tag": "section",
+  "settings": [
+
+    ]
+}
+{% endschema %}

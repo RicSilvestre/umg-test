@@ -86,7 +86,7 @@
       </script>
       <script src="{{ 'variant-selectors.js' |  asset_url }}" defer="defer"></script>
     {% endif %}
-  </head>
+      </head>
   <body>
     <a class="sr-only focus:not-sr-only" href="#main">
       {{ 'accessibility.skip_to_text' | t }}
@@ -96,5 +96,6 @@
       {{ content_for_layout }}
     </main>
     {% section 'footer' %}
+    {% section 'drawer-cart' %}
   </body>
 </html>
